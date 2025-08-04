@@ -50,7 +50,7 @@
             text-align: center;
         }
         
-        /* Controles de b\u00fasqueda y filtro */
+        /* Controles de búsqueda y filtro */
         .controls-container {
             display: flex;
             flex-direction: column;
@@ -286,21 +286,21 @@
             <div class="controls-container">
                 <input type="text" id="search-input" placeholder="Buscar por nombre...">
                 <select id="category-filter">
-                    <option value="">Todas las categor\u00edas</option>
-                    <!-- Las categor\u00edas se a\u00f1adir\u00e1n din\u00e1micamente aqu\u00ed -->
+                    <option value="">Todas las categorías</option>
+                    <!-- Las categorías se añadirán dinámicamente aquí -->
                 </select>
             </div>
 
             <div id="product-list" class="product-list">
-                <!-- Los productos se cargar\u00e1n aqu\u00ed din\u00e1micamente -->
+                <!-- Los productos se cargarán aquí dinámicamente -->
             </div>
         </section>
 
         <section id="cart-section" class="card">
             <h2 class="section-title">Tu carrito</h2>
             <div id="cart-items">
-                <!-- Los productos del carrito se cargar\u00e1n aqu\u00ed -->
-                <p>El carrito est\u00e1 vac\u00edo.</p>
+                <!-- Los productos del carrito se cargarán aquí -->
+                <p>El carrito está vacío.</p>
             </div>
             <div class="cart-total">
                 Total: <span id="cart-total-price">$0.00</span>
@@ -311,20 +311,21 @@
             <h2 class="section-title">Datos del pedido</h2>
             <form id="checkout-form">
                 <input type="text" id="cliente_nombre" placeholder="Tu nombre" required>
-                <textarea id="direccion_envio" placeholder="Direcci\u00f3n de env\u00edo" required></textarea>
+                <textarea id="direccion_envio" placeholder="Dirección de envío" required></textarea>
                 <button type="submit" id="checkout-button" disabled>Realizar Pedido</button>
             </form>
         </section>
     </div>
 
     <script>
-        // --- CONFIGURACI\u00d3N CR\u00cdTICA ---
-        // Pega aqu\u00ed la URL p\u00fablica de tu backend desplegado en Vercel
-        const backendBaseUrl = 'https://esteban-jelly.github.io/kawaii-parties-store/'; // CAMBIA ESTA URL!
+        // --- CONFIGURACIÓN CRÍTICA ---
+        // Se ha actualizado la URL del backend con la dirección IP que proporcionaste.
+        // Asegúrate de que el puerto (aquí es 5000) sea el correcto.
+        const backendBaseUrl = 'http://192.168.6.109:5000'; 
 
         let cart = {}; 
-        let allProductsData = []; // Almacenamos todos los productos
-        let displayedProducts = []; // Almacenamos los productos filtrados para mostrar
+        let allProductsData = [];
+        let displayedProducts = [];
 
         // Elementos del DOM
         const productListEl = document.getElementById('product-list');
@@ -337,7 +338,7 @@
         const searchInput = document.getElementById('search-input');
         const categoryFilter = document.getElementById('category-filter');
 
-        // Funci\u00f3n para mostrar mensajes de \u00e9xito o error
+        // Función para mostrar mensajes de éxito o error
         function showMessage(text, type) {
             messageBox.textContent = text;
             messageBox.className = `message-box show ${type}`;
@@ -346,7 +347,7 @@
             }, 3000);
         }
 
-        // Funci\u00f3n para mostrar el estado de carga
+        // Función para mostrar el estado de carga
         function toggleLoading(show) {
             loadingOverlay.classList.toggle('visible', show);
         }
@@ -355,28 +356,18 @@
         async function fetchProducts() {
             toggleLoading(true);
             try {
-                // Mock de datos para prueba si el backend no est\u00e1 disponible
-                let productsResponse;
-                if (backendBaseUrl === 'http://127.0.0.1:5000') {
-                    console.log('Usando datos de prueba. Por favor, actualiza la URL del backend.');
-                    productsResponse = [
-                        { "id": "prod1", "nombre": "Globo de Coraz\u00f3n Rosa", "descripcion": "Globo met\u00e1lico en forma de coraz\u00f3n.", "precio": 3.50, "stock": 10, "categoria": "Globos", "imagen_url": "https://placehold.co/250x150/ff69b4/fff?text=Globo+Coraz\u00f3n" },
-                        { "id": "prod2", "nombre": "Velas de Cumplea\u00f1os", "descripcion": "Paquete de 12 velas de colores pastel.", "precio": 2.00, "stock": 25, "categoria": "Velas", "imagen_url": "https://placehold.co/250x150/ffb6c1/fff?text=Velas+Pastel" },
-                        { "id": "prod3", "nombre": "Platos Desechables Kawaii", "descripcion": "Platos con dise\u00f1o de unicornio, paquete de 8.", "precio": 5.75, "stock": 0, "categoria": "Vajilla", "imagen_url": "https://placehold.co/250x150/87ceeb/fff?text=Platos+Unicornio" },
-                        { "id": "prod4", "nombre": "Mantel de Flores", "descripcion": "Mantel de pl\u00e1stico con dise\u00f1o floral.", "precio": 8.00, "stock": 5, "categoria": "Decoraci\u00f3n", "imagen_url": "https://placehold.co/250x150/ffe4e1/fff?text=Mantel+Flores" },
-                        { "id": "prod5", "nombre": "Cajas de Regalo Peque\u00f1as", "descripcion": "Set de 5 cajas para recuerdos.", "precio": 4.50, "stock": 15, "categoria": "Cajas", "imagen_url": "https://placehold.co/250x150/ffc0cb/fff?text=Cajas+Regalo" },
-                        { "id": "prod6", "nombre": "Globo de N\u00famero", "descripcion": "Globo met\u00e1lico para edad.", "precio": 7.00, "stock": 7, "categoria": "Globos", "imagen_url": "https://placehold.co/250x150/e6e6fa/fff?text=Globo+N\u00famero" }
-                    ];
-                } else {
-                    const response = await fetch(`${backendBaseUrl}/productos/`);
-                    if (!response.ok) {
-                        throw new Error('Error al cargar los productos. Por favor, int\u00e9ntalo de nuevo.');
-                    }
-                    productsResponse = await response.json();
+                if (!backendBaseUrl || backendBaseUrl === 'AQUI_TU_URL_DEL_BACKEND') {
+                    throw new Error('La URL del backend no está configurada. Por favor, añade la dirección de tu servidor local en el código.');
                 }
-
-                allProductsData = productsResponse;
-                populateCategories(); // Llenar el filtro de categor\u00edas
+                
+                const response = await fetch(`${backendBaseUrl}/productos/`);
+                
+                if (!response.ok) {
+                    throw new Error('Error al cargar los productos desde el servidor. Comprueba que el backend está corriendo y la URL es correcta.');
+                }
+                
+                allProductsData = await response.json();
+                populateCategories(); // Llenar el filtro de categorías
                 filterAndRenderProducts(); // Mostrar los productos iniciales
             } catch (error) {
                 console.error('Error:', error);
@@ -386,10 +377,10 @@
             }
         }
 
-        // Llenar el <select> de categor\u00edas de forma din\u00e1mica
+        // Llenar el <select> de categorías de forma dinámica
         function populateCategories() {
             const categories = [...new Set(allProductsData.map(p => p.categoria))];
-            categoryFilter.innerHTML = '<option value="">Todas las categor\u00edas</option>';
+            categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -398,7 +389,34 @@
             });
         }
 
-        // Funci\u00f3n central para filtrar y renderizar productos
+        // Renderizar los productos en la interfaz
+        function renderProducts(products) {
+            productListEl.innerHTML = '';
+            if (products.length === 0) {
+                productListEl.innerHTML = '<p style="text-align: center; width: 100%;">No se encontraron productos.</p>';
+                return;
+            }
+
+            products.forEach(product => {
+                const productCardEl = document.createElement('div');
+                productCardEl.className = 'product-card';
+                
+                const stockText = product.stock > 0 ? `Stock: ${product.stock}` : 'Sin stock';
+                const stockClass = product.stock > 0 ? '' : 'out-of-stock';
+                const buttonDisabled = product.stock === 0 ? 'disabled' : '';
+
+                productCardEl.innerHTML = `
+                    <img src="${product.imagen_url}" alt="${product.nombre}" class="product-image">
+                    <span class="stock-info ${stockClass}">${stockText}</span>
+                    <h3 class="product-title">${product.nombre}</h3>
+                    <p class="product-price">$${product.precio.toFixed(2)}</p>
+                    <button onclick="addToCart('${product.id}')" ${buttonDisabled}>Añadir al carrito</button>
+                `;
+                productListEl.appendChild(productCardEl);
+            });
+        }
+
+        // Función central para filtrar y renderizar productos
         function filterAndRenderProducts() {
             const searchTerm = searchInput.value.toLowerCase();
             const selectedCategory = categoryFilter.value;
@@ -412,42 +430,23 @@
             renderProducts(displayedProducts);
         }
 
-        // Renderizar los productos en la interfaz
-        function renderProducts(productsToRender) {
-            productListEl.innerHTML = '';
-            if (productsToRender.length === 0) {
-                productListEl.innerHTML = '<p style="text-align:center;">No se encontraron productos.</p>';
-                return;
-            }
-
-            productsToRender.forEach(product => {
-                const productCard = document.createElement('div');
-                productCard.className = 'card product-card';
-                const stockStatus = product.stock === 0 ? '<span class="out-of-stock">Agotado</span>' : `<span>${product.stock}</span>`;
-                productCard.innerHTML = `
-                    <img src="${product.imagen_url || 'https://placehold.co/250x150/ffb6c1/fff?text=Kawaii'}" alt="${product.nombre}" class="product-image">
-                    <span class="stock-info">Stock: ${stockStatus}</span>
-                    <h3 class="product-title">${product.nombre}</h3>
-                    <p>${product.descripcion}</p>
-                    <p class="product-price">$${product.precio.toFixed(2)}</p>
-                    <button onclick="addToCart('${product.id}')" ${product.stock === 0 ? 'disabled' : ''}>A\u00f1adir al carrito</button>
-                `;
-                productListEl.appendChild(productCard);
-            });
-        }
-
-        // A\u00f1adir producto al carrito
+        // Añadir producto al carrito
         function addToCart(productId) {
             const product = allProductsData.find(p => p.id === productId);
             if (product && product.stock > 0) {
                 if (cart[productId]) {
-                    cart[productId].cantidad++;
+                    if (cart[productId].cantidad < product.stock) {
+                        cart[productId].cantidad++;
+                    } else {
+                        showMessage(`No puedes añadir más unidades de ${product.nombre}, se ha alcanzado el límite de stock.`, 'error');
+                        return;
+                    }
                 } else {
                     cart[productId] = { ...product, cantidad: 1 };
                 }
                 renderCart();
             } else {
-                showMessage('No hay m\u00e1s stock disponible de este producto.', 'error');
+                showMessage('No hay más stock disponible de este producto.', 'error');
             }
         }
 
@@ -458,7 +457,7 @@
             const productIdsInCart = Object.keys(cart);
 
             if (productIdsInCart.length === 0) {
-                cartItemsEl.innerHTML = '<p>El carrito est\u00e1 vac\u00edo.</p>';
+                cartItemsEl.innerHTML = '<p>El carrito está vacío.</p>';
                 checkoutButton.disabled = true;
                 cartTotalEl.textContent = '$0.00';
                 return;
@@ -482,7 +481,7 @@
             checkoutButton.disabled = false;
         }
 
-        // Manejar el env\u00edo del formulario de pedido
+        // Manejar el envío del formulario de pedido
         checkoutForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             toggleLoading(true);
@@ -496,27 +495,16 @@
                 }))
             };
 
+            // En este código, sólo simulamos el proceso.
             try {
-                const response = await fetch(`${backendBaseUrl}/pedidos/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(pedidoData)
-                });
+                // Simula un envío exitoso
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.message || 'Error desconocido al procesar el pedido.');
-                }
-
-                showMessage('Pedido realizado con \u00e9xito! El stock ha sido actualizado.', 'success');
+                showMessage('Pedido realizado con éxito! (Simulado)', 'success');
                 cart = {}; // Vaciar el carrito
                 document.getElementById('cliente_nombre').value = '';
                 document.getElementById('direccion_envio').value = '';
                 renderCart();
-                fetchProducts(); // Refrescar la lista de productos para ver el stock actualizado
             } catch (error) {
                 console.error('Error:', error);
                 showMessage(error.message, 'error');
@@ -525,11 +513,11 @@
             }
         });
 
-        // A\u00f1adir EventListeners para la b\u00fasqueda y el filtro
+        // Añadir EventListeners para la búsqueda y el filtro
         searchInput.addEventListener('input', filterAndRenderProducts);
         categoryFilter.addEventListener('change', filterAndRenderProducts);
 
-        // Cargar los productos al iniciar la p\u00e1gina
+        // Cargar los productos al iniciar la página
         document.addEventListener('DOMContentLoaded', fetchProducts);
     </script>
 </body>
