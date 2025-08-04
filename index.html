@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KawaiiParties - Catálogo de Productos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* Gris claro para el fondo */
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .text-shadow {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .filter-btn-active {
+            background-color: #f9a8d4; /* Color rosa claro */
+            color: #d12e8b; /* Texto rosa oscuro */
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-3xl shadow-2xl p-6 md:p-10">
+
+        <!-- Encabezado de la página -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-pink-500 mb-2 text-shadow">KawaiiParties</h1>
+            <p class="text-xl text-gray-600">Tu tienda de productos adorables para fiestas</p>
+        </header>
+
+        <!-- Contenedor principal del catálogo y carrito -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Sección de Productos -->
+            <section class="lg:col-span-2">
+                <h2 class="text-3xl font-semibold text-gray-800 mb-6">Nuestros Productos</h2>
+
+                <!-- Barra de búsqueda y filtros por categoría -->
+                <div class="mb-6 space-y-4">
+                    <!-- Buscador por nombre de producto -->
+                    <input type="text" id="search-input" placeholder="Buscar por nombre de producto..." class="w-full p-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-pink-400 transition-colors duration-200 shadow-sm">
+                    
+                    <!-- Botones de filtro por categoría -->
+                    <div id="category-filters" class="flex flex-wrap gap-2 text-sm">
+                        <!-- Los botones de categorías se generarán aquí dinámicamente -->
+                    </div>
+                </div>
+
+                <div id="products-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Los productos se cargarán aquí dinámicamente -->
+                    <div id="loading-products" class="col-span-full text-center text-gray-500">Cargando productos...</div>
+                </div>
+            </section>
+
+            <!-- Sección del Carrito de Compras -->
+            <section class="lg:col-span-1">
+                <div class="sticky top-4 space-y-6">
+                    
+                    <!-- Carrito de compras -->
+                    <div class="bg-blue-50 rounded-xl p-6 shadow-md border-2 border-blue-200">
+                        <h2 class="text-2xl font-bold text-blue-800 mb-4">🛒 Carrito de Compras</h2>
+                        <div id="cart-items" class="space-y-4 max-h-72 overflow-y-auto no-scrollbar">
+                            <!-- Los productos del carrito se cargarán aquí -->
+                            <p id="empty-cart-message" class="text-gray-500 text-center">El carrito está vacío.</p>
+                        </div>
+                        <div class="border-t-2 border-blue-200 mt-4 pt-4 flex justify-between items-center">
+                            <span class="text-lg font-bold text-blue-800">Total:</span>
+                            <span id="cart-total" class="text-2xl font-extrabold text-blue-600">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Formulario para realizar el pedido -->
+                    <div class="bg-green-50 rounded-xl p-6 shadow-md border-2 border-green-200">
+                        <h2 class="text-2xl font-bold text-green-800 mb-4">🚀 Finalizar Pedido</h2>
+                        <form id="order-form" class="space-y-4">
+                            <div>
+                                <label for="client-name" class="block text-sm font-medium text-gray-700">Nombre Completo</label>
+                                <input type="text" id="client-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                            </div>
+                            <div>
+                                <label for="client-email" class="block text-sm font-medium text-gray-700">Email</label>
+                                <input type="email" id="client-email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                            </div>
+                            <div>
+                                <label for="client-address" class="block text-sm font-medium text-gray-700">Dirección de Envío</label>
+                                <input type="text" id="client-address" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                            </div>
+                            <button type="submit" id="checkout-button" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-green-600 transition-colors duration-200">
+                                Confirmar Pedido
+                            </button>
+                        </form>
+                        <div id="order-message" class="mt-4 text-center p-3 rounded-lg hidden"></div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts de JavaScript -->
+    <script>
+        // API Base URL
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // Elementos del DOM
+        const productsListEl = document.getElementById('products-list');
+        const cartItemsEl = document.getElementById('cart-items');
+        const emptyCartMessageEl = document.getElementById('empty-cart-message');
+        const cartTotalEl = document.getElementById('cart-total');
+        const orderFormEl = document.getElementById('order-form');
+        const orderMessageEl = document.getElementById('order-message');
+        const checkoutButtonEl = document.getElementById('checkout-button');
+        const loadingProductsEl = document.getElementById('loading-products');
+        // Nuevos elementos para filtros y búsqueda
+        const searchInputEl = document.getElementById('search-input');
+        const categoryFiltersEl = document.getElementById('category-filters');
+
+        // Estado de la aplicación
+        let productsData = [];
+        let cart = [];
+        // Nuevo estado para los filtros
+        let selectedCategory = 'all';
+        let searchQuery = '';
+        
+        // Función para mostrar mensajes
+        const showMessage = (text, type = 'success') => {
+            orderMessageEl.textContent = text;
+            orderMessageEl.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+            if (type === 'success') {
+                orderMessageEl.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                orderMessageEl.classList.add('bg-red-100', 'text-red-700');
+            }
+            setTimeout(() => {
+                orderMessageEl.classList.add('hidden');
+            }, 5000);
+        };
+        
+        // Renderiza la tarjeta de un producto
+        const renderProductCard = (product) => {
+            return `
+                <div class="bg-gray-100 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 flex flex-col justify-between">
+                    <img src="${product.imagen_url || 'https://placehold.co/400x300/a0a0a0/ffffff?text=Producto'}" alt="${product.nombre}" class="w-full h-48 object-cover">
+                    <div class="p-4 flex-grow flex flex-col">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">${product.nombre}</h3>
+                        <p class="text-gray-600 text-sm flex-grow">${product.descripcion}</p>
+                        <div class="mt-4 flex justify-between items-center">
+                            <span class="text-2xl font-extrabold text-pink-600">$${product.precio.toFixed(2)}</span>
+                            <button onclick="addToCart('${product.id}')" class="bg-pink-500 text-white rounded-full p-2 shadow-lg hover:bg-pink-600 transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        // Renderiza un ítem del carrito
+        const renderCartItem = (item) => {
+            return `
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
+                    <div class="flex-grow">
+                        <h4 class="font-semibold text-gray-800">${item.nombre}</h4>
+                        <p class="text-sm text-gray-500">${item.cantidad} x $${item.precio.toFixed(2)}</p>
+                    </div>
+                    <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-700 transition-colors duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+        };
+        
+        // Actualiza la vista del carrito
+        const updateCartView = () => {
+            cartItemsEl.innerHTML = '';
+            if (cart.length === 0) {
+                emptyCartMessageEl.classList.remove('hidden');
+                checkoutButtonEl.disabled = true;
+                checkoutButtonEl.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                emptyCartMessageEl.classList.add('hidden');
+                cart.forEach(item => {
+                    cartItemsEl.innerHTML += renderCartItem(item);
+                });
+                checkoutButtonEl.disabled = false;
+                checkoutButtonEl.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            
+            const total = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            cartTotalEl.textContent = `$${total.toFixed(2)}`;
+        };
+
+        // Añade un producto al carrito
+        const addToCart = (productId) => {
+            const product = productsData.find(p => p.id === productId);
+            if (!product) {
+                showMessage('Producto no encontrado.', 'error');
+                return;
+            }
+
+            const cartItem = cart.find(item => item.id === productId);
+            if (cartItem) {
+                // Verificar stock
+                if (cartItem.cantidad >= product.stock) {
+                    showMessage('No hay suficiente stock para este producto.', 'error');
+                    return;
+                }
+                cartItem.cantidad++;
+            } else {
+                // Verificar stock
+                if (product.stock < 1) {
+                     showMessage('No hay stock disponible para este producto.', 'error');
+                     return;
+                }
+                cart.push({
+                    id: product.id,
+                    nombre: product.nombre,
+                    precio: product.precio,
+                    cantidad: 1
+                });
+            }
+            updateCartView();
+            showMessage(`"${product.nombre}" añadido al carrito.`);
+        };
+
+        // Elimina un producto del carrito
+        const removeFromCart = (productId) => {
+            const itemIndex = cart.findIndex(item => item.id === productId);
+            if (itemIndex > -1) {
+                cart[itemIndex].cantidad--;
+                if (cart[itemIndex].cantidad <= 0) {
+                    cart.splice(itemIndex, 1);
+                }
+            }
+            updateCartView();
+        };
+
+        // Renderiza los botones de filtro de categoría
+        const renderCategoryFilters = () => {
+            categoryFiltersEl.innerHTML = '';
+            const categories = new Set(productsData.map(p => p.categoria));
+            
+            const allButton = document.createElement('button');
+            allButton.textContent = 'Todos';
+            allButton.dataset.category = 'all';
+            allButton.className = `px-4 py-2 rounded-full text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 ${selectedCategory === 'all' ? 'filter-btn-active' : ''}`;
+            allButton.addEventListener('click', () => {
+                selectedCategory = 'all';
+                renderFilteredProducts();
+            });
+            categoryFiltersEl.appendChild(allButton);
+
+            categories.forEach(category => {
+                const button = document.createElement('button');
+                button.textContent = category;
+                button.dataset.category = category;
+                button.className = `px-4 py-2 rounded-full text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 ${selectedCategory === category ? 'filter-btn-active' : ''}`;
+                button.addEventListener('click', () => {
+                    selectedCategory = category;
+                    renderFilteredProducts();
+                });
+                categoryFiltersEl.appendChild(button);
+            });
+        };
+        
+        // Filtra y renderiza los productos en base a la categoría y el término de búsqueda
+        const renderFilteredProducts = () => {
+            let filteredProducts = productsData;
+            
+            // Filtrar por categoría
+            if (selectedCategory !== 'all') {
+                filteredProducts = filteredProducts.filter(product => product.categoria === selectedCategory);
+            }
+
+            // Filtrar por búsqueda
+            const query = searchQuery.toLowerCase().trim();
+            if (query) {
+                filteredProducts = filteredProducts.filter(product => product.nombre.toLowerCase().includes(query));
+            }
+            
+            // Actualizar la vista de los botones de categoría
+            document.querySelectorAll('#category-filters button').forEach(button => {
+                if (button.dataset.category === selectedCategory) {
+                    button.classList.add('filter-btn-active');
+                } else {
+                    button.classList.remove('filter-btn-active');
+                }
+            });
+
+            // Renderizar los productos filtrados
+            productsListEl.innerHTML = filteredProducts.map(renderProductCard).join('');
+            if (filteredProducts.length === 0) {
+                productsListEl.innerHTML = `<div class="col-span-full text-center text-gray-500">No se encontraron productos.</div>`;
+            }
+        };
+
+        // Carga y muestra los productos
+        const fetchAndRenderProducts = async () => {
+            loadingProductsEl.classList.remove('hidden');
+            productsListEl.innerHTML = '';
+            try {
+                const response = await fetch(`${API_BASE_URL}/productos/`);
+                if (!response.ok) throw new Error('Error al cargar los productos.');
+                productsData = await response.json();
+                
+                renderCategoryFilters(); // Genera los botones de categoría
+                renderFilteredProducts(); // Renderiza los productos con los filtros iniciales
+            } catch (error) {
+                productsListEl.innerHTML = `<div class="col-span-full text-center text-red-500">Error: ${error.message}</div>`;
+                console.error('Error fetching products:', error);
+            } finally {
+                loadingProductsEl.classList.add('hidden');
+            }
+        };
+
+        // Maneja la creación del pedido
+        orderFormEl.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (cart.length === 0) {
+                showMessage('El carrito está vacío, no se puede realizar un pedido.', 'error');
+                return;
+            }
+
+            const nombreCliente = document.getElementById('client-name').value;
+            const emailCliente = document.getElementById('client-email').value;
+            const direccionCliente = document.getElementById('client-address').value;
+
+            const productosPedido = cart.map(item => ({
+                producto_id: item.id,
+                cantidad: item.cantidad
+            }));
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/pedidos/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre_cliente: nombreCliente,
+                        email_cliente: emailCliente,
+                        direccion_cliente: direccionCliente,
+                        productos_pedido: productosPedido
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error al procesar el pedido.');
+                }
+
+                showMessage('¡Pedido realizado con éxito! En breve recibirás un correo de confirmación.', 'success');
+                
+                // Limpiar carrito y formulario
+                cart = [];
+                updateCartView();
+                orderFormEl.reset();
+
+                // Volver a cargar productos para reflejar el stock actualizado
+                fetchAndRenderProducts();
+
+            } catch (error) {
+                showMessage(error.message, 'error');
+                console.error('Error creating order:', error);
+            }
+        });
+
+        // Manejador del input de búsqueda
+        searchInputEl.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderFilteredProducts();
+        });
+
+        // Carga los productos al iniciar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndRenderProducts();
+            updateCartView();
+        });
+    </script>
+</body>
+</html>
